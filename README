@@ -1,0 +1,31 @@
+Video/Info version 0.05
+=======================
+
+Generic class to probe video files for various attributes.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test (optional)
+   make install
+
+DEPENDENCIES
+
+This module does not require any other modules or libraries.
+However, for Video::Info to be of any use, you should install 
+at least one of the following:
+   RIFF::Info
+   ASF::Info
+   MP3::Info
+   MPEG::Info
+
+COPYRIGHT AND LICENCE
+
+Released under QPL 1.0
+
+Copyright (C) 2002 
+Allen Day <allenday@ucla.edu>
+Benjamin Ginter <bginter@asicommunications.com>

@@ -1,0 +1,17 @@
+Revision history for Perl extension Video::Info.
+
+0.05  Added Magic for determining filetypes by first 4 bytes.  Largely
+      derived from magic(1)
+
+      Video::Info seems to be working as a factory class for RIFF::Info
+      and ASF::Info objects.
+
+      Audio codec hex->name mapping moved into Magic.pm from RIFF::Info
+
+      Added methods for ASF author/rating/copyright/etc info.  May also
+      apply to MPEG video, and certainly MP2/3.
+
+0.01  Sun Jan 20 17:38:41 2002
+	- original version; created by h2xs 1.21 with options
+		-AX Video::Info
+
