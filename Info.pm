@@ -10,7 +10,6 @@
 package Video::Info;
 use 5.006;
 use strict;
-use warnings;
 use Symbol;
 
 our %FIELDS = ( 
@@ -25,8 +24,11 @@ our %FIELDS = (
 			   comments    => '', #???
 
 			   astreams    => 0,  #number of audio streams
+			   acodec      => '', #audio codec
+			   acodecraw   => '', #audio codec (numeric)
 			   arate       => 0,  #audio bitrate
 			   achans      => 0,  #number of audio channels
+			   afrequency  => '', #audio sampling frequency
 
 			   vstreams    => 0,  #number of video streams
 			   vcodec      => '', #video codec
@@ -65,18 +67,57 @@ our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
-our $VERSION = '0.07';
+our $VERSION = '0.09';
 
 for my $datum ( keys %FIELDS ) {
     no strict "refs"; ## to register new methods in package
     *$datum = sub {
 	shift; ## XXX: ignore calling class/object
 	$FIELDS{$datum} = shift if @_;
+
+       if ( $datum eq 'acodec' ) {
+            return acodec2str( $FIELDS{acodec} ) || $FIELDS{acodec};
+        }
+        elsif ( $datum eq 'acodecraw' ) {
+            return $FIELDS{acodec};
+        }
+
 	return $FIELDS{$datum};
     } 
 }   
 
 1;
+
+
+##------------------------------------------------------------------------
+## Extra methods
+##
+##------------------------------------------------------------------------
+sub minutes {
+  my $self = shift;
+  my $seconds = int($self->duration) % 60;
+  my $minutes = (int($self->duration) - $seconds) / 60;
+  return $minutes;
+}
+
+sub MMSS {
+  my $self = shift;
+  my $mm = $self->minutes;
+  my $ss = int($self->duration) - ($self->minutes * 60);
+
+  my $return = sprintf( "%02d:%02d",$mm,$ss );
+}
+
+sub dimensions {
+  my $self = shift;
+  return $self->width."x".$self->height;
+}
+
+#Hmm... should we deprecate this?
+sub length {
+  my $self = shift;
+  return $self->duration;
+}
 
 ##------------------------------------------------------------------------
 ## Override superclass constructor
@@ -92,7 +133,7 @@ sub new {
   if($param{-file}){
 	my ( $filetype, $handler ) = @{ divine( $param{ -file } ) };
 	if ( $handler ) {
-	  my $class = $handler . '::Info';
+	  my $class = $handler;# . '::Info';
 	  my $has_class = eval "require $class"; #we shouldn't die here... -allen
 	  $param{-subtype} = $filetype;
 	  
@@ -100,7 +141,7 @@ sub new {
 	  if($has_class){
 
                 #special case for MP3::Info, grr
-                if($handler eq 'MP3'){
+                if($handler =~ /^MP3/){
                   $self = $class->new( $param{ -file } );
                 }
 
@@ -130,22 +171,6 @@ sub new {
   }
   
   return $self;
-}
-
-##------------------------------------------------------------------------
-## Audio codec accessor methods.
-##------------------------------------------------------------------------
-sub acodecraw { return shift->{acodec}; }
-sub acodec    {
-    my $self   = shift;
-    my $caller = caller;
-
-    ## restrict setting values to our modules
-    if ( ref( $self ) eq $caller ) {
-	  ##print "Setting acodec == $_[0]\n";
-	  $self->{acodec} = shift if @_;
-    }
-    return acodec2str( $self->{acodec} ) || $self->{acodec};
 }
 
 ##------------------------------------------------------------------------
@@ -256,58 +281,123 @@ does a (series of) sysread() to determine various attributes
 of the file.  You don't need to call probe() yourself, it is 
 done for you by the constructor, new().
 
-=head2 ACCESSORS
+=head2 METHODS
 
 These methods should be available for all manufactured classes
 (except MP3::Info):
 
-type(): file type (RIFF, ASF, etc).
+=head2 Audio Methods
 
-length(): Playing time, in seconds.
+=over 4
 
-achans(): Number of audio channels. 0 for no sound, 1 for mono, 
-2 for stereo.  A higher value is possible, in principle.
+=item achans()
 
-acodec(): Name of the audio codec.
+Number of audio channels. 0 for no sound, 1 for mono,2 for 
+stereo.  A higher value is possible, in principle.
 
-arate(): bits/second dedicated to an audio stream.
+=item acodec()
 
-astreams(): Number of audio streams.  This is often >1 for files
-with multiple audio tracks (usually in different languages).
+Name of the audio codec.
 
-vcodec(): Name of the video codec.
+=item arate()
 
-vframes(): Number of video frames.
+bits/second dedicated to an audio stream.
 
-fps(): How many frames/second are displayed.
+=item astreams()
 
-width(): video frame width, in pixels.
+Number of audio streams.  This is often >1 for files with 
+multiple audio tracks (usually in different languages).
 
-height(): video frame height, in pixels.
+=item afrequency()
 
-geometry(): Ben?
+Sampling rate of the audio stream, in Hertz.
 
-vrate(): bits/second dedicated to a video stream.
+=back
 
-vstreams() : Number of video streams.  0 for audio only.  This
-may be >1 for multi-angle video and the like, but I haven't seen
+=head2 Video Methods
+
+=over 4
+
+=item vcodec()
+
+Name of the video codec.
+
+=item vframes()
+
+Number of video frames.
+
+=item vrate()
+
+average bits/second dedicated to a video stream.
+
+=item vstreams()
+
+Number of video streams.  0 for audio only.  This may be 
+>1 for multi-angle video and the like, but I haven't seen
 it yet.
 
-ASF files may contain information about their content.  The
-following methods for ASF files are more likely to return
-a defined value:
+=item fps()
 
-title(): Title of the file content.  Not the filename.
+How many frames/second are displayed.
 
-author(): Author of the file content.
+=item width()
 
-copyright(): Copyright, if any.
+video frame width, in pixels.
 
-description(): Freetext description of the content.
+=item height()
 
-rating(): I think this is for an MPAA rating (PG, G, etc).
+video frame height, in pixels.
 
-packets(): Number of data packets in the file.
+=back
+
+=head2 Other Methods
+
+=over 4
+
+=item type()
+
+file type (RIFF, ASF, etc).
+
+=item duration()
+
+file length in seconds
+
+=item minutes()
+
+file length in minutes, rounded down
+
+=item MMSS()
+
+file length in minutes + seconds, in the format MM:SS
+
+=item geometry()
+
+Ben?
+
+=item title()
+
+Title of the file content.  Not the filename.
+
+=item author()
+
+Author of the file content.
+
+=item copyright()
+
+Copyright, if any.
+
+=item description()
+
+Freetext description of the content.
+
+=item rating()
+
+I think this is for an MPAA rating (PG, G, etc).
+
+=item packets()
+
+Number of data packets in the file.
+
 
 =head2 EXPORT
 
@@ -324,6 +414,7 @@ None.
 
 L<Video::Info::Magic>
 L<MPEG::Info>
+L<MPEG::LibMPEG3>
 L<RIFF::Info>
 L<ASF::Info>
 
