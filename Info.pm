@@ -8,97 +8,130 @@
 ##------------------------------------------------------------------------
 
 package Video::Info;
-use 5.006;
+
 use strict;
-use Symbol;
-
-our %FIELDS = ( 
-			   filename    => '', #path to file
-			   type        => '', #ASF,MPEG,RIFF,etc
-			   title       => '', #ASF media title
-			   author      => '', #ASF author
-			   date        => '', #ASF date (units???)
-			   copyright   => '', #ASF copyright
-			   description => '', #ASF description (freetext)
-			   rating      => '', #ASF MPA rating
-			   packets     => '', #ASF something
-			   comments    => '', #???
-
-			   astreams    => 0,  #number of audio streams
-			   acodec      => '', #audio codec
-			   acodecraw   => '', #audio codec (numeric)
-			   arate       => 0,  #audio bitrate
-			   achans      => 0,  #number of audio channels
-			   afrequency  => '', #audio sampling frequency
-
-			   vstreams    => 0,  #number of video streams
-			   vcodec      => '', #video codec
-			   vrate       => 0,  #video bitrate
-			   vframes     => 0,  #number of video frames
-
-			   fps         => 0,  #number of video frames per second
-			   scale       => 0,  #quoeth transcode: if(scale!=0) AVI->fps = (double)rate/(double)scale;
-			   duration    => 0,  #express this in seconds
-
-			   width       => 0,  #video width
-			   height      => 0,  #video height
-
-			   aspect      => '', ##how to handle this?  16:9 scalar, or 16/9 float?
-			   aspect_raw  => 0,  ##not sure what this is.  from MPEG?
-		
-			   _handle     => gensym, #filehandle to the bitstream
-			  );
-					
 use Video::Info::Magic;
-require Exporter;
+use IO::File;
 
-our @ISA = qw(Exporter);
+our $VERSION = '0.99';
 
-##------------------------------------------------------------------------
-## Items to export into callers namespace by default. Note: do not export
-## names by default without a very good reason. Use EXPORT_OK instead.
-## Do not simply export all your public functions/methods/constants.
-##------------------------------------------------------------------------
-## This allows declaration	use Video::Info ':all';
-## If you do not need this, moving things directly into @EXPORT or 
-## @EXPORT_OK will save memory.
-##------------------------------------------------------------------------
-our %EXPORT_TAGS = ( 'all' => [ qw() ] );
+use Class::MakeMethods::Emulator::MethodMaker
+  get_set => [ qw(
+			  type             #ASF,MPEG,RIFF...
+			  title            #ASF media title
+			  author           #ASF author
+			  date             #ASF date (units???)
+			  copyright        #ASF copyright
+			  description      #ASF description (freetext)
+			  rating           #ASF MPAA rating
+			  packets          #ASF ???
+			  comments         #ASF ???
 
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+			  astreams         #no. of audio streams.  can this clash with achans?
+#this has special behavior, method is below
+#			  acodec           #audio codec
+			  acodecraw        #audio codec (numeric)
+			  arate            #audio bitrate
+			  afrequency       #audio sampling frequency, in Hz
+			  achans           #no. of audio channels.  can this clash with astreams?
 
-our @EXPORT = qw( );
-our $VERSION = '0.10';
+			  vstreams         #no. of video streams
+			  vcodec           #video codec
+			  vrate            #video bitrate
+			  vframes          #no. of video frames
 
-for my $datum ( keys %FIELDS ) {
-    no strict "refs"; ## to register new methods in package
-    *$datum = sub {
-	shift; ## XXX: ignore calling class/object
-	$FIELDS{$datum} = shift if @_;
+			  fps              #video frames/second
+			  scale            #quoeth transcode: if(scale!=0) AVI->fps = (double)rate/(double)scale;
+			  duration         #duration of video, in seconds
 
-       if ( $datum eq 'acodec' ) {
-            return acodec2str( $FIELDS{acodec} ) || $FIELDS{acodec};
-        }
-        elsif ( $datum eq 'acodecraw' ) {
-            return $FIELDS{acodec};
-        }
+			  width            #frame width
+			  height           #frame height
 
-	return $FIELDS{$datum};
-    } 
-}   
+			  aspect_raw       #how to handle this?  16:9 scalar, or 16/9 float?
+			  aspect           #not sure what this is.  from MPEG
 
-1;
+			  filename         #the sourcefile name
+              filesize         #the size of the source file
 
+			  _handle          #filehandle to bitstream
+			 ) ],
+  new_with_init => 'new',
+;
+
+sub init {
+  my $proto = shift;
+  my $class = ref($proto) || $proto;
+  my $self = bless { @_ }, $class;
+  $self->init_attributes(@_) ;
+
+  my %raw_param = @_;
+  my %param;
+  foreach(keys %raw_param){/^-(.+)/;$param{$1} = $raw_param{$_}};
+
+  if($param{file}){
+
+	my($filetype,$handler) = @{ divine($param{file}) };
+	if($handler){
+	  my $class = __PACKAGE__ . '::' . $handler;
+	  my $has_class = eval "require $class";
+	  $param{subtype} = $filetype;
+
+	  if($has_class){
+		if($handler eq 'MP3'){
+		  $self = $class->new( $param{file} );
+		} else {
+
+		  $self = $class->new(%param);
+
+		  $self->probe( $param{file}, [ $filetype, $handler ] );
+		}
+	  } else {
+		$self->{$_} = $param{$_} foreach(keys %param);
+	  }
+	  return $self;
+	}
+  } else {
+	##if we really need to return a Video::Info object, we need to chop off these -'s.
+	$self->{$_} = $param{$_} foreach(keys %param);
+	
+	## doesn't probe() just re-divine() the file and die?
+	$self->probe( $param{file} );
+	return $self;
+  }
+  return $self;
+}
+
+sub init_attributes {
+  my $self = shift;
+  my %raw_param = @_;
+  my %param;
+  foreach(keys %raw_param){/^-(.+)/;$param{$1} = $raw_param{$_}};
+
+  foreach my $attr (qw(
+					   astreams arate achans vstreams vrate vframes fps
+					   scale duration width height aspect aspect_raw
+					  )
+				   ) {
+	$self->$attr(0);
+  }
+
+  $self->filename($param{file});
+  $self->filesize(-s $param{file});
+  $self->handle($param{file}) if $param{file};
+}
 
 ##------------------------------------------------------------------------
 ## Extra methods
 ##
 ##------------------------------------------------------------------------
-sub filesize {
-  my $self = shift;
-  return $self->{filesize} if defined $self->{filesize};
-  $self->{filesize} = -s $self->filename;
-  return $self->{filesize};
+sub acodec {
+  my($self,$arg) = @_;
+  if($arg){
+	$self->{acodec} = acodec2str($arg);
+  } elsif(!$self->{acodec}){
+	$self->{acodec} = acodec2str($self->acodecraw);
+  }
+  return $self->{acodec};
 }
 
 sub minutes {
@@ -116,72 +149,6 @@ sub MMSS {
   my $return = sprintf( "%02d:%02d",$mm,$ss );
 }
 
-sub dimensions {
-  my $self = shift;
-  return $self->width."x".$self->height;
-}
-
-#Hmm... should we deprecate this?
-sub length {
-  my $self = shift;
-  return $self->duration;
-}
-
-##------------------------------------------------------------------------
-## Override superclass constructor
-##
-##------------------------------------------------------------------------
-sub new {
-  my $proto = shift;
-  my $class = ref($proto) || $proto;
-  my $self = bless { @_, },$class;
-  
-  my %param = @_;
-  
-  if($param{-file}){
-	my ( $filetype, $handler ) = @{ divine( $param{ -file } ) };
-	if ( $handler ) {
-	  my $class = $handler;# . '::Info';
-	  my $has_class = eval "require $class"; #we shouldn't die here... -allen
-	  $param{-subtype} = $filetype;
-	  
-	  #if we can manufacture the class, do it
-	  if($has_class){
-
-                #special case for MP3::Info, grr
-                if($handler =~ /^MP3/){
-                  $self = $class->new( $param{ -file } );
-                }
-
-                else {
-		  $self = $class->new(%param);
-		  $self->probe( $param{-file}, [ $filetype, $handler ] );
-                }
-
-		#otherwise return a dummy Video::Info
-	  } else {
-		my %nodash_param = ();
-		foreach(keys %param){/^-(.+)/;$nodash_param{$1} = $param{$_}};
-		$self->{$_} = $param{$_} foreach(keys %nodash_param);
-	  }
-
-	  return $self;				
-	} else {
-	  my %nodash_param = ();
-	  foreach(keys %param){/^-(.+)/;$nodash_param{$1} = $param{$_}};
-	  
-	  ##if we really need to return a Video::Info object, we need to chop off these -'s.
-	  $self->{$_} = $param{$_} foreach(keys %nodash_param);
-	  
-	  ## doesn't probe() just re-divine() the file and die?
-	  $self->probe( $param{-file} );
-	  return $self;
-	}
-  }
-  
-  return $self;
-}
-
 ##------------------------------------------------------------------------
 ## handle()
 ##
@@ -190,12 +157,12 @@ sub new {
 sub handle {
     my($self,$file) = @_;
 
-    return $self->_handle unless defined $file;
-
-    $self->filename($file);
-
-    open(F,$file) or die "couldn't open $file: $!";
-    return $self->_handle( \*F );
+	if(defined $file){
+	  my $fh = new IO::File;
+	  $fh->open($file);
+	  $self->_handle($fh);
+	}
+    return $self->_handle;
 }
 
 ##------------------------------------------------------------------------
@@ -220,6 +187,8 @@ sub probe {
 	  $warn );
 	  
 }
+
+1;
 
 __END__
 
@@ -260,17 +229,17 @@ following filetypes:
 
   Module                 Filetype
   -------------------------------------------------
-  ASF::Info              ASF
+  Video::Info::ASF              ASF
   MP3::Info              MPEG Layer 2, MPEG Layer 3
-  MPEG::Info             MPEG1, MPEG2, MPEG 2.5
-  RIFF::Info             AVI, DivX
+  Video::Info::MPEG      MPEG1, MPEG2, MPEG 2.5
+  Video::Info::RIFF      AVI, DivX
+  Video::Info::Quicktime MOV, MOOV, MDAT, QT
 
 And support is planned for:
 
   Module                 Filetype
   -------------------------------------------------
-  Quicktime::Info        MOV, MOOV, MDAT, QT
-  Real::Info             RealNetworks formats
+  Video::Info::Real      RealNetworks formats
 
 =head1 METHODS
 
@@ -318,6 +287,8 @@ bits/second dedicated to an audio stream.
 
 Number of audio streams.  This is often >1 for files with 
 multiple audio tracks (usually in different languages).
+
+=back
 
 =item afrequency()
 
@@ -411,30 +382,26 @@ Freetext description of the content.
 
 =item rating()
 
-I think this is for an MPAA rating (PG, G, etc).
+This is for an MPAA rating (PG, G, etc).
 
 =item packets()
 
 Number of data packets in the file.
 
 
-=head2 EXPORT
-
-None.
-
 =head1 AUTHORS
 
  Copyright (c) 2002
- QPL Version 1.0
- Benjamin R. Ginter, <bginter@asicommunications.com>
+ Aladdin Free Public License (see LICENSE for details)
  Allen Day, <allenday@ucla.edu>
+ Benjamin R. Ginter <?@?>
 
 =head1 SEE ALSO
 
 L<Video::Info::Magic>
-L<MPEG::Info>
-L<MPEG::LibMPEG3>
-L<RIFF::Info>
-L<ASF::Info>
+L<Video::Info::ASF>
+L<Video::Info::MPEG>
+L<Video::Info::Quicktime>
+L<Video::Info::RIFF>
 
 =cut

@@ -1,23 +1,28 @@
 Revision history for Perl extension Video::Info.
 
-0.10  Added filename() and filesize() methods for returning the path to
-      the file used to create the object, as well as its size (in bytes).
+0.99  Skipping waaaaay up!  Major changes this release.  Quicktime
+      support has been added via OpenQuicktime.  This means new depen-
+      dencies on Inline::C and the OpenQuicktime C library itself.
+      Apologies to non-linux users... someone code me a pure-perl
+      module that follows the "FOO.pm" and "FOO.t" format, and I'll
+      add it.
 
-0.09  Added afrequency() method for retrieving audio channel sampling
-      frequency (Corren Vorwerk)
-      No longer using warnings.pm because of problems with ActiveState Perl
-      (Alex Polomski)
+      Once I'm sure all the problems are worked out, I'll bump the
+      revision to 1.00.
+
+      Another major change is the license.  I've moved the modules
+      to the Aladding Free Public License, which is very explicit
+      about prohibiting commercial use.  Personal users, treat it
+      like a GPL.  Commercial users, contact me <allenday@ucla.edu>
+      for a license.
+
+      Thanks to William Scott Hoge and Steven Lembark for their help
+      with the Quicktime format.
 
 0.08  Added documentation missing for some methods
       Added minutes() method
       Added MMSS() method for Minutes:Seconds format
       Internal changes for how acodec() and acodecraw() are processed
-      Added recognition for RIFF-CDXA and RIFF-WAV files.  Video::Info
-        now attempts to create an Audio::WAV object for RIFF-WAV.
-      Added placeholders for DV::PAL/NTSC (Digital Video formats, from
-        camcorders and the like).  Parsers haven't been written for DV yet.
-      Addded dimensions() method that returns width() x height() scalar.
-      length() is now an alias for duration().
 
 0.07  ASF Mapping was not correct.  Fixed.
       Added new audio codecs.

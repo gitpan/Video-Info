@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use lib '../blib/lib';
+use lib './blib/lib';
 use strict;
 
 BEGIN {

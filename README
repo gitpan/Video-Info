@@ -1,7 +1,12 @@
-Video/Info version 0.05
-=======================
+Video::Info version 0.99
+=======-================
 
-Generic class to probe video files for various attributes.
+Suite of modules to probe video files for various attributes.
+
+To contribute, use Video::Info::FOO as a template to write
+a module, and email it to the Allen Day <allenday@ucla.edu>.
+Also see t/FOO.t as an example test script to verify the
+sanity of your code.
 
 INSTALLATION
 
@@ -14,18 +19,14 @@ To install this module type the following:
 
 DEPENDENCIES
 
-This module does not require any other modules or libraries.
-However, for Video::Info to be of any use, you should install 
-at least one of the following:
-   RIFF::Info
-   ASF::Info
-   MP3::Info
-   MPEG::Info
+   Video::OpenQuicktime
+   Class::MakeMethods::Emulator
 
 COPYRIGHT AND LICENCE
 
-Released under QPL 1.0
+Released under the Aladdin Free Public License,
+See the LICENSE file for details.
 
 Copyright (C) 2002 
 Allen Day <allenday@ucla.edu>
-Benjamin Ginter <bginter@asicommunications.com>
+Benjamin Ginter <?@?>
