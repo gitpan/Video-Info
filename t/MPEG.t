@@ -13,7 +13,7 @@ BEGIN {
 	use lib 't';
     }
     use Test;
-    plan tests => 18 }
+    plan tests => 19 }
 
 my $userdata = "(C) 1997-2000 Womble Multimedia, Inc.\nMPEG-VCR OEM (09/2000)\nOct 15 2000\n";
  
@@ -39,7 +39,7 @@ ok $file->vcodec       eq 'MPEG1';            warn $file->vcodec if DEBUG;
 ok $file->comments     eq $userdata;          warn $file->comments if DEBUG;
 ok $file->vframes      == 38;                 warn $file->vframes if DEBUG;
 ok $file->vrate        == 1500000;            warn $file->vrate if DEBUG;
-
+ok $file->minutes      == 0;                  warn $file->minutes if DEBUG;
 
 #the bad
 

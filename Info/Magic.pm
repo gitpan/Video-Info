@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2002 Allen Day
 ##  Purpose: Attempt to determine video file type.  Based on /usr/share/magic
 ## Comments: None
-##      CVS: $Header: /cvsroot/perlvideo/Info/Magic.pm,v 1.3 2002/10/29 13:44:44 allenday Exp $
+##      CVS: $Header: /cvsroot/perlvideo/Info/Magic.pm,v 1.4 2002/11/12 04:20:03 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::Magic;

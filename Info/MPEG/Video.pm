@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2001 Benjamin R. Ginter
 ##  Purpose: Parse video streams
 ## Comments: None
-##      CVS: $Id: Video.pm,v 1.2 2002/10/23 14:00:52 allenday Exp $
+##      CVS: $Id: Video.pm,v 1.4 2003/07/08 07:35:33 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::MPEG::Video;
@@ -41,13 +41,12 @@ sub parse {
 
     ## Make sure we have video
     $self->is_video() or return 0;
-
     #if we made it this far, assume a bona fide MPEG
     $self->type('MPEG');
     $self->get_size();
     $self->get_frame_rate();
     $self->get_aspect_ratio();
-    $self->get_bitrate();
+	$self->get_bitrate();
     $self->get_duration();
     $self->get_extensions();
     $self->get_gop();
@@ -225,7 +224,10 @@ sub get_bitrate {
     my $bitrate = $self->grab( 2, $self->{offset} ) << 2;
     my $lasttwo = $self->get_byte( $self->{offset} + 2 ) >> 6;
 
-    $self->vrate( ( $bitrate | $lasttwo ) * 400);
+	if(!$self->vrate){
+	  $self->vrate( ( $bitrate | $lasttwo ) * 400);
+	} else {
+	}
 }
 
 ##------------------------------------------------------------------------
@@ -235,9 +237,8 @@ sub get_bitrate {
 ##------------------------------------------------------------------------
 sub get_duration {
     my $self = shift;
-
     $self->duration ( ( $self->filesize * 8 ) / ( $self->vrate * 400 ) );
-}    
+}
 
 ##------------------------------------------------------------------------
 ## get_extensions()
@@ -286,8 +287,10 @@ sub get_gop {
     my $self = shift;
 
     if ( !$self->next_start_code( 0xb8, $self->{offset} ) ) {
-	## should we return 0 here?
-	die "Couldn't find first GOP after Video Sequence start!\n";
+	  ##Ben: should we return 0 here?
+	  ##Allen: yes, i suppose so.
+	  return 0;
+	  ##Allen: let's not do this:	die "Couldn't find first GOP after Video Sequence start!\n";
     }
     print "Found GOP Header (0xB8) at $self->{last_offset} $self->{offset}\n" if DEBUG;
 }
@@ -315,6 +318,6 @@ __END__
  Copyright (c) 2002
  Aladdin Free Public License (see LICENSE for details)
  Allen Day, <allenday@ucla.edu>
- Benjamin R. Ginter <?@?>
+ Benjamin R. Ginter <bginter@asicommunications.com>
 
 

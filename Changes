@@ -1,5 +1,25 @@
 Revision history for Perl extension Video::Info.
 
+0.993 Repair of some initialization with the MPEG and Quicktime parsers.
+
+      All individual parsers except quicktime now seem to be properly
+      instantiable via Video::Info::new() by detecting filetype with
+      divine().
+
+      Now detecting new ASF GUIDs (Dustin Rice)
+
+0.992 Revised the README to inform users that there are no longer 
+      RIFF, ASF, or MPEG Info dependencies.  Thanks to Anna Gendler for
+      catching this one.
+
+      Reinstating Benjamin Ginter's correct email address in documentation
+      and copyright files.
+
+0.991 Unanticipated problems with the Class::MakeMethods init()
+      behavior, had to make some small fixes.  Also had to fix problems
+      related to removing dashes (-) from parameters.  Dashes are going to
+      be deprecated soon.
+
 0.99  Skipping waaaaay up!  Major changes this release.  Quicktime
       support has been added via OpenQuicktime.  This means new depen-
       dencies on Inline::C and the OpenQuicktime C library itself.

@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2001 Benjamin R. Ginter
 ##  Purpose: MPEG codes, blocks, constants...
 ## Comments: None
-##      CVS: $Header: /cvsroot/perlvideo/Info/MPEG/Constants.pm,v 1.2 2002/10/23 14:00:52 allenday Exp $
+##      CVS: $Header: /cvsroot/perlvideo/Info/MPEG/Constants.pm,v 1.3 2002/11/12 07:19:34 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::MPEG::Constants;
@@ -254,6 +254,6 @@ __END__
  Copyright (c) 2002
  Aladdin Free Public License (see LICENSE for details)
  Allen Day, <allenday@ucla.edu>
- Benjamin R. Ginter <?@?>
+ Benjamin R. Ginter <bginter@asicommunications.com>
 
 

@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2002 Benjamin R. Ginter
 ##  Purpose: Parse system streams
 ## Comments: None
-##      CVS: $Id: System.pm,v 1.2 2002/10/23 14:00:52 allenday Exp $
+##      CVS: $Id: System.pm,v 1.3 2002/11/12 07:19:34 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::MPEG::System;
@@ -492,6 +492,6 @@ __END__
  Copyright (c) 2002
  Aladdin Free Public License (see LICENSE for details)
  Allen Day, <allenday@ucla.edu>
- Benjamin R. Ginter <?@?>
+ Benjamin R. Ginter <bginter@asicommunications.com>
 
 

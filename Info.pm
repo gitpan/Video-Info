@@ -13,79 +13,76 @@ use strict;
 use Video::Info::Magic;
 use IO::File;
 
-our $VERSION = '0.991';
+our $VERSION = '0.993';
 
 use Class::MakeMethods::Emulator::MethodMaker
-  get_set => [ qw(
-			  type             #ASF,MPEG,RIFF...
-			  title            #ASF media title
-			  author           #ASF author
-			  date             #ASF date (units???)
-			  copyright        #ASF copyright
-			  description      #ASF description (freetext)
-			  rating           #ASF MPAA rating
-			  packets          #ASF ???
-			  comments         #ASF ???
+  get_set => [
+			  'type',             #ASF,MPEG,RIFF...
+			  'title',            #ASF media title
+			  'author',           #ASF author
+			  'date',             #ASF date (units???)
+			  'copyright',        #ASF copyright
+			  'description',      #ASF description (freetext)
+			  'rating',           #ASF MPAA rating
+			  'packets',          #ASF ???
+			  'comments',         #MPEG
 
-			  astreams         #no. of audio streams.  can this clash with achans?
+			  'astreams',         #no. of audio streams.  can this clash with achans?
 #this has special behavior, method is below
-#			  acodec           #audio codec
-			  acodecraw        #audio codec (numeric)
-			  arate            #audio bitrate
-			  afrequency       #audio sampling frequency, in Hz
-			  achans           #no. of audio channels.  can this clash with astreams?
+#			  'acodec',           #audio codec
+			  'acodecraw',        #audio codec (numeric)
+			  'arate',            #audio bitrate
+			  'afrequency',       #audio sampling frequency, in Hz
+			  'achans',           #no. of audio channels.  can this clash with astreams?
 
-			  vstreams         #no. of video streams
-			  vcodec           #video codec
-			  vrate            #video bitrate
-			  vframes          #no. of video frames
+			  'vstreams',         #no. of video streams
+			  'vcodec',           #video codec
+			  'vrate',            #video bitrate
+			  'vframes',          #no. of video frames
 
-			  fps              #video frames/second
-			  scale            #quoeth transcode: if(scale!=0) AVI->fps = (double)rate/(double)scale;
-			  duration         #duration of video, in seconds
+			  'fps',              #video frames/second
+			  'scale',            #quoeth transcode: if(scale!=0) AVI->fps = (double)rate/(double)scale;
+			  'duration',         #duration of video, in seconds
 
-			  width            #frame width
-			  height           #frame height
+			  'width',            #frame width
+			  'height',           #frame height
 
-			  aspect_raw       #how to handle this?  16:9 scalar, or 16/9 float?
-			  aspect           #not sure what this is.  from MPEG
+			  'aspect_raw',       #how to handle this?  16:9 scalar, or 16/9 float?
+			  'aspect',           #not sure what this is.  from MPEG
 
-			  filename         #the sourcefile name
-              filesize         #the size of the source file
+			  'filename',         #the sourcefile name
+			  'filesize',         #the size of the source file
 
-			  _handle          #filehandle to bitstream
-			 ) ],
-#  new_with_init => 'new',
+			  '_handle',          #filehandle to bitstream
+			 ],
 ;
 
 sub new {
   my $proto = shift;
   my $class = ref($proto) || $proto;
-  my $self = bless { @_ }, $class;
+  my $self = bless {}, $class;
 
   $self = $self->init(@_);
-  return $self;
 
-#  return $self->init(@_) if ref($self) eq __PACKAGE__;
-#  return $self;
+  return $self;
 }
 
 sub init {
-  my $proto = shift;
-  my $class = ref($proto) || $proto;
-  my $self = bless { @_ }, $class;
-  $self->init_attributes(@_) ;
+  my($self,%raw) = @_;
+#  my($proto,%raw) = @_;
+#  my $class = ref($proto) || $proto;
+#  my $self = bless {}, $class;
 
-  my %raw_param = @_;
   my %param;
-  foreach(keys %raw_param){/^-?(.+)/;$param{$1} = $raw_param{$_}};
+  foreach(keys %raw){/^-?(.+)/;$param{$1} = $raw{$_}};
 
   if($param{file}){
 	my($filetype,$handler) = @{ divine($param{file}) };
 
 	if($handler){
 	  my $class = __PACKAGE__ . '::' . $handler;
-             $class = 'MP3::Info' if $handler eq 'MP3';
+
+	  $class = 'MP3::Info' if $handler eq 'MP3';
 
 	  my $has_class = eval "require $class";
 	  $param{subtype} = $filetype;
@@ -93,34 +90,29 @@ sub init {
 	  if($has_class){
 		if($handler eq 'MP3'){
 		  $self = $class->new( $param{file} );
+		  return $self;
 		} else {
 		  $self = $class->new(%param);
 		  $self->probe( $param{file}, [ $filetype, $handler ] );
 		}
-	  } else {
-		$self->{$_} = $param{$_} foreach(keys %param);
 	  }
-	  return $self;
 	}
-  } else {
-	##if we really need to return a Video::Info object, we need to chop off these -'s.
-	$self->{$_} = $param{$_} foreach(keys %param);
-	
-	## doesn't probe() just re-divine() the file and die?
-	$self->probe( $param{file} );
-	return $self;
   }
+
+  $self->{$_} = $param{$_} foreach(keys %param);
+
+  $self->init_attributes(%param) ;
+
+  $self->probe( $param{file} );
+
   return $self;
 }
 
 sub init_attributes {
   my $self = shift;
-  my %raw_param = @_;
+  my %raw = @_;
   my %param;
-
-  #this cleans out optional -'s from the front of args.
-  #i plan to deprecate -'ed args somewhere near v2.0
-  foreach(keys %raw_param){ /^-?(.+)/; $param{$1} = $raw_param{$_}; };
+  foreach(keys %raw){/^-?(.+)/;$param{$1} = $raw{$_}};
 
   foreach my $attr (qw(
 					   astreams arate achans vstreams vrate vframes fps
@@ -303,8 +295,6 @@ bits/second dedicated to an audio stream.
 Number of audio streams.  This is often >1 for files with 
 multiple audio tracks (usually in different languages).
 
-=back
-
 =item afrequency()
 
 Sampling rate of the audio stream, in Hertz.
@@ -409,7 +399,7 @@ Number of data packets in the file.
  Copyright (c) 2002
  Aladdin Free Public License (see LICENSE for details)
  Allen Day, <allenday@ucla.edu>
- Benjamin R. Ginter <?@?>
+ Benjamin R. Ginter <bginter@asicommunications.com>
 
 =head1 SEE ALSO
 

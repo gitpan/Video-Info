@@ -1,10 +1,10 @@
 ##------------------------------------------------------------------------
-##  Package: Info.pm
+##  Package: MPEG.pm
 ##   Author: Benjamin R. Ginter, Allen Day
 ##   Notice: Copyright (c) 2001 Benjamin R. Ginter, Allen Day
 ##  Purpose: Extract information about MPEG files.
 ## Comments: None
-##      CVS: $Id: MPEG.pm,v 1.2 2002/10/23 14:00:52 allenday Exp $
+##      CVS: $Id: MPEG.pm,v 1.7 2002/11/13 01:05:17 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::MPEG;
@@ -23,50 +23,57 @@ use Video::Info::MPEG::System;
 use constant DEBUG => 0;
 
 use Class::MakeMethods::Emulator::MethodMaker
-  get_set => [ qw(
-
-				  type
-				  copyright
-				  comments
-
-				  astreams         #no. of audio streams.  can this clash with achans?
+  get_set => [
+	      'type',
+	      'copyright',
+	      'comments',
+	      
+	      'astreams',         #no. of audio streams.  can this clash with achans?
 #this has special behavior, method is below
-				  #			  acodec           #audio codec
-				  acodecraw        #audio codec (numeric)
-				  arate            #audio bitrate
-				  achans           #no. of audio channels.  can this clash with astreams?
-				  afrequency
-
-				  vstreams         #no. of video streams
-				  vcodec           #video codec
-				  vrate            #video bitrate
+	      'acodec',           #audio codec
+	      'acodecraw',        #audio codec (numeric)
+	      'arate',            #audio bitrate
+	      'achans',           #no. of audio channels.  can this clash with astreams?
+	      'afrequency',
+	      
+	      'vstreams',         #no. of video streams
+	      'vcodec',           #video codec
+	      'vrate',            #video bitrate
 #this has special behavior, method is below
-				  #			  vframes          #no. of video frames
-				  
-				  fps              #video frames/second
-				  scale            #quoeth transcode: if(scale!=0) AVI->fps = (double)rate/(double)scale;
-				  duration         #duration of video, in seconds
-				  
-				  width            #frame width
-				  height           #frame height
-				  
-				  aspect_raw       #how to handle this?  16:9 scalar, or 16/9 float?
-				  aspect           #not sure what this is.  from MPEG
-				  
-				  _handle          #filehandle to bitstream
-				  
-				  offset
-				  last_offset
-
-				  header_size
-
-				  filesize
-				  filename
-				  audio_system_header
-				  video_system_header
-				  version
-				  context
-				 ) ],
+	      #'vframes',          #no. of video frames
+	      
+	      'fps',              #video frames/second
+	      'scale',            #quoeth transcode: if(scale!=0) AVI->fps = (double)rate/(double)scale;
+	      'duration',         #duration of video, in seconds
+	      
+	      'width',            #frame width
+	      'height',           #frame height
+	      
+	      'aspect_raw',       #how to handle this?  16:9 scalar, or 16/9 float?
+	      'aspect',           #not sure what this is.  from MPEG
+	      
+	      '_handle',          #filehandle to bitstream
+	      
+	      'offset',
+	      'last_offset',
+	      
+	      'header_size',
+	      
+	      'filesize',
+	      'filename',
+	      'audio_system_header',
+	      'video_system_header',
+	      'version',
+	      'context',
+	      
+	      'minutes',
+	      'MMSS',
+	      'title',
+	      'author',
+	      'description',
+	      'rating',
+	      'packets',
+	     ],
   new_with_init => 'new',
 ;
 
@@ -120,6 +127,25 @@ sub handle {
 	  $self->_handle($fh);
 	}
     return $self->_handle;
+}
+
+##------------------------------------------------------------------------
+## Extra methods
+##
+##------------------------------------------------------------------------
+sub minutes {
+  my $self = shift;
+  my $seconds = int($self->duration) % 60;
+  my $minutes = (int($self->duration) - $seconds) / 60;
+  return $minutes;
+}
+
+sub MMSS {
+  my $self = shift;
+  my $mm = $self->minutes;
+  my $ss = int($self->duration) - ($self->minutes * 60);
+
+  my $return = sprintf( "%02d:%02d",$mm,$ss );
 }
 
 ##------------------------------------------------------------------------
@@ -788,14 +814,14 @@ Otherwise, it's Reserved.
 
 =head1 AUTHORS
 
-Benjamin R. Ginter, <?@?>
+Benjamin R. Ginter, <bginter@asicommunications.com>
 Allen Day, <allenday@ucla.edu>
 
 =head1 COPYRIGHT
 
  Copyright (c) 2001-2002
  Aladdin Free Public License (see LICENSE for details)
- Benjamin R. Ginter <?@?>, Allen Day <allenday@ucla.edu>
+ Benjamin R. Ginter <bginter@asicommunications.com>, Allen Day <allenday@ucla.edu>
 
 =head1 SEE ALSO
 
