@@ -65,7 +65,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 for my $datum ( keys %FIELDS ) {
     no strict "refs"; ## to register new methods in package
@@ -98,8 +98,17 @@ sub new {
 	  
 	  #if we can manufacture the class, do it
 	  if($has_class){
-		$self = $class->new(%param);
-		$self->probe( $param{-file}, [ $filetype, $handler ] );
+
+                #special case for MP3::Info, grr
+                if($handler eq 'MP3'){
+                  $self = $class->new( $param{ -file } );
+                }
+
+                else {
+		  $self = $class->new(%param);
+		  $self->probe( $param{-file}, [ $filetype, $handler ] );
+                }
+
 		#otherwise return a dummy Video::Info
 	  } else {
 		my %nodash_param = ();
@@ -133,10 +142,10 @@ sub acodec    {
 
     ## restrict setting values to our modules
     if ( ref( $self ) eq $caller ) {
-	  ## print "Setting acodec == $_[0]\n";
+	  ##print "Setting acodec == $_[0]\n";
 	  $self->{acodec} = shift if @_;
     }
-    return acodec2str( $self->{acodec} );
+    return acodec2str( $self->{acodec} ) || $self->{acodec};
 }
 
 ##------------------------------------------------------------------------

@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2002 Allen Day
 ##  Purpose: Attempt to determine video file type.  Based on /usr/share/magic
 ## Comments: None
-##      CVS: $Header: /cvsroot/Video-Info/Info/Magic.pm,v 1.9 2002/02/11 07:56:13 allenday Exp $
+##      CVS: $Header: /cvsroot/Video-Info/Info/Magic.pm,v 1.12 2002/02/17 20:51:45 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::Magic;
@@ -15,6 +15,7 @@ use warnings;
 require Exporter;
 
 our @ISA = qw(Exporter);
+our $VERSION = '1.01';
 
 #we're going to use a enhexable string as the constant value
 #that matches the first four bytes of that filetype.  For lack
@@ -62,7 +63,6 @@ our @EXPORT = qw( MPEG1
 		  divine	
 		  acodec2str
 		  );
-# our $VERSION = '0.01';
 
 ##------------------------------------------------------------------------
 ## Preloaded methods go here.
@@ -79,12 +79,11 @@ sub divine {
     close(F);
 
     ## convert the four bytes to an unsigned long
-    my $key2 = unpack( 'n', substr($four,0,2) );
+    my $two = unpack( 'n', substr($four,0,2) );
     $four    = unpack( 'N', $four );
-    # warn( sprintf( "Hex: 0x%04x\n", $key2 ) );
+    # warn( sprintf( "Hex: 0x%04x\n", $two ) );
     # warn( sprintf( "Hex: 0x%08x\n", $four ) );
-    
-    
+
 #TODO: MPEG1 MPEG2
     
     ## try to match the big, specific ones first
@@ -97,8 +96,9 @@ sub divine {
 		  0x2e524d46    =>  [VIDEO_REALMEDIA,          'Real'],
 		  0x6d6f6f76    =>  [VIDEO_QUICKTIME_MOOV,'QuickTime'],
 		  0x6d646174    =>  [VIDEO_QUICKTIME_MDAT,'QuickTime'],
-		  0x75b22630    =>  [VIDEO_ASF1,                'ASF'],
+		  0x3026b275    =>  [VIDEO_ASF1,                'ASF'],
 		  );
+#		  0x75b22630    =>  [VIDEO_ASF1,                'ASF'],
     
     ## there may be more possible second bits (f0-f9) for MPEG I audio layers
     my %table2 = (
@@ -108,10 +108,11 @@ sub divine {
 		  0xfffd       =>  [VIDEO_MPEG_LAYER_2,        'MP3'], #11111101 not yet
 		  0xfffe       =>  [VIDEO_MPEG_LAYER_3,        'MP3'], #11111110 probably
 		  0xffff       =>  [VIDEO_MPEG_LAYER_3,        'MP3'], #11111111 not yet
+		  0x4944       =>  [VIDEO_MPEG_LAYER_3,        'MP3'], #THIS HAS AN ID3 TAG
 		  );
     
     $table4{$four} ? return $table4{$four} : 0;
-    $table2{$key2} ? return $table2{$key2} : 0;
+    $table2{$two}  ? return $table2{$two} : 0;
     
     return [VIDEO_UNKNOWN_FORMAT,undef];
 }
@@ -127,18 +128,19 @@ sub acodec2str {
   my %codec = (
 	       0x1        => 'Uncompressed PCM',
 	       0x2        => 'MS ADPCM',
+	       0x4        => 'Windows Media Audio', #is this right?
 	       0x6        => 'aLaw',
 	       0x7        => 'uLaw',
-		   0xa        => 'DivX audio (WMA)',
+	       0xa        => 'DivX audio (WMA)',
 	       0x11       => 'IMA ADPCM',
 	       0x31       => 'MS GSM 6.10',
 	       0x32       => 'MS GSM 6.10',  # MSN Audio
 	       0x50       => 'MPEG Layer 1/2',
 	       0x55       => 'MPEG Layer 3',
-		   0x61       => 'Duck DK4 ADPCM (rogue format number)',
-		   0x62       => 'Duck DK3 ADPCM (rogue format number)',
+	       0x61       => 'Duck DK4 ADPCM (rogue format number)',
+	       0x62       => 'Duck DK3 ADPCM (rogue format number)',
 	       0x75       => 'VoxWare',
-#nonono	       0x85       => 'MPEG Layer 3',
+	       0x85       => 'MPEG Layer 3',
 	       0x111      => 'Vivo G.723',
 	       0x112      => 'Vivo G.723/Siren',
 	       0x130      => 'ACELP.net Sipro Lab Audio Decoder',
@@ -160,11 +162,10 @@ sub acodec2str {
   );
 
 #warn "num: $numeric , cod: $codec{$numeric}";
-  if ( defined $numeric && defined $codec{ $numeric } ) {
+  if ( defined $numeric && defined $codec{$numeric} ) {
       return $codec{$numeric};
   }
 
-  return undef;
 }
 
 

@@ -1,5 +1,11 @@
 Revision history for Perl extension Video::Info.
 
+0.07  ASF Mapping was not correct.  Fixed.
+      Added new audio codecs.
+      Added preliminary support for ID3 tagged MP3
+
+0.06  Minor fix to the MANIFEST
+
 0.05  Added Magic for determining filetypes by first 4 bytes.  Largely
       derived from magic(1)
 
