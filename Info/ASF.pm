@@ -68,6 +68,7 @@ sub header {
 sub init {
   my $self = shift;
   $self->init_attributes(@_);
+  return $self;
 }
 
 sub probe {

@@ -24,6 +24,7 @@ sub init {
   my $self = shift;
   my %param = @_;
   $self->init_attributes(@_);
+  return $self;
 }
 
 #######################################

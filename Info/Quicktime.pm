@@ -1,7 +1,6 @@
 package Video::Info::Quicktime;
 
 use strict;
-use Video::Info;
 use Video::OpenQuicktime;
 use base qw(Video::Info);
 
@@ -13,6 +12,7 @@ sub init {
   my %param = @_;
   $self->oqt( Video::OpenQuicktime->new( file=>$param{-file} ) );
   $self->init_attributes(@_);
+  return $self;
 }
 
 sub oqt {

@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2002 Allen Day
 ##  Purpose: Attempt to determine video file type.  Based on /usr/share/magic
 ## Comments: None
-##      CVS: $Header: /cvsroot/perlvideo/Info/Magic.pm,v 1.1 2002/10/17 11:49:17 allenday Exp $
+##      CVS: $Header: /cvsroot/perlvideo/Info/Magic.pm,v 1.3 2002/10/29 13:44:44 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::Magic;
@@ -32,6 +32,7 @@ use constant VIDEO_REALAUDIO          => 0x2e7261fd;
 use constant VIDEO_REALMEDIA          => 0x2e524d46;
 use constant VIDEO_QUICKTIME_MOOV     => 0x6d6f6f76;
 use constant VIDEO_QUICKTIME_MDAT     => 0x6d646174;
+use constant VIDEO_QUICKTIME_PNOT     => 0x706e6f74;
 use constant VIDEO_ASF1               => 0x75b22630;
 
 ##------------------------------------------------------------------------
@@ -74,15 +75,18 @@ sub divine {
     my $filename = shift || die "divine(): please provide path/to/file";
     
     open(F,$filename) || die "divine(): couldn't open $filename: $!";
-    my $four = undef;
-    sysread(F,$four,4) == 4 or die "divine(): sysread()\n";
+    my($four1,$four2) = undef;
+    sysread(F,$four1,4) == 4 or die "divine(): sysread()\n";
+    sysread(F,$four2,4) == 4 or die "divine(): sysread()\n";
     close(F);
 
     ## convert the four bytes to an unsigned long
-    my $two = unpack( 'n', substr($four,0,2) );
-    $four    = unpack( 'N', $four );
-    # warn( sprintf( "Hex: 0x%04x\n", $two ) );
-    # warn( sprintf( "Hex: 0x%08x\n", $four ) );
+    my $two = unpack( 'n', substr($four1,0,2) );
+    $four1  = unpack( 'N', $four1 );
+    $four2  = unpack( 'N', $four2 );
+    #warn( sprintf( "Hex: 0x%04x\n", $two ) );
+    #warn( sprintf( "Hex: 0x%08x\n", $four1 ) );
+    #warn( sprintf( "Hex: 0x%16x\n", $four2 ) );
 
 #TODO: MPEG1 MPEG2
     
@@ -94,8 +98,9 @@ sub divine {
 		  0x41564920    =>  [VIDEO_RIFF,               'RIFF'],
 		  0x2e7261fd    =>  [VIDEO_REALAUDIO,          'Real'],
 		  0x2e524d46    =>  [VIDEO_REALMEDIA,          'Real'],
-		  0x6d6f6f76    =>  [VIDEO_QUICKTIME_MOOV,'QuickTime'],
-		  0x6d646174    =>  [VIDEO_QUICKTIME_MDAT,'QuickTime'],
+		  0x6d6f6f76    =>  [VIDEO_QUICKTIME_MOOV,'Quicktime'],
+		  0x6d646174    =>  [VIDEO_QUICKTIME_MDAT,'Quicktime'],
+		  0x706e6f74	=>  [VIDEO_QUICKTIME_PNOT,'Quicktime'],
 		  0x3026b275    =>  [VIDEO_ASF1,                'ASF'],
 		  );
 #		  0x75b22630    =>  [VIDEO_ASF1,                'ASF'],
@@ -111,7 +116,8 @@ sub divine {
 		  0x4944       =>  [VIDEO_MPEG_LAYER_3,        'MP3'], #THIS HAS AN ID3 TAG
 		  );
     
-    $table4{$four} ? return $table4{$four} : 0;
+    $table4{$four1} ? return $table4{$four1} : 0;
+    $table4{$four2} ? return $table4{$four2} : 0;
     $table2{$two}  ? return $table2{$two} : 0;
     
     return [VIDEO_UNKNOWN_FORMAT,undef];

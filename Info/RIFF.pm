@@ -17,6 +17,7 @@ sub init {
   my %param = @_;
   $self->init_attributes(@_);
   $self->header_size($param{-headersize} || MAX_HEADER_BYTES);
+  return $self;
 }
 
 ##------------------------------------------------------------------------

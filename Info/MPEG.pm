@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2001 Benjamin R. Ginter, Allen Day
 ##  Purpose: Extract information about MPEG files.
 ## Comments: None
-##      CVS: $Id: MPEG.pm,v 1.1 2002/10/17 11:49:17 allenday Exp $
+##      CVS: $Id: MPEG.pm,v 1.2 2002/10/23 14:00:52 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::MPEG;
@@ -96,7 +96,7 @@ sub init_attributes {
   my $self = shift;
   my %raw_param = @_;
   my %param;
-  foreach(keys %raw_param){/^-(.+)/;$param{$1} = $raw_param{$_}};
+  foreach(keys %raw_param){/^-?(.+)/;$param{$1} = $raw_param{$_}};
 
   foreach my $attr (qw(
 					   astreams arate achans vstreams vrate fps

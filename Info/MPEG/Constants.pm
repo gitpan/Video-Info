@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2001 Benjamin R. Ginter
 ##  Purpose: MPEG codes, blocks, constants...
 ## Comments: None
-##      CVS: $Header: /cvsroot/perlvideo/Info/MPEG/Constants.pm,v 1.1 2002/10/17 11:50:29 allenday Exp $
+##      CVS: $Header: /cvsroot/perlvideo/Info/MPEG/Constants.pm,v 1.2 2002/10/23 14:00:52 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::MPEG::Constants;

@@ -4,7 +4,7 @@
 ##   Notice: Copyright (c) 2002 Benjamin R. Ginter
 ##  Purpose: Parse system streams
 ## Comments: None
-##      CVS: $Id: System.pm,v 1.1 2002/10/17 11:50:29 allenday Exp $
+##      CVS: $Id: System.pm,v 1.2 2002/10/23 14:00:52 allenday Exp $
 ##------------------------------------------------------------------------
 
 package Video::Info::MPEG::System;

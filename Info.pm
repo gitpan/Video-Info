@@ -13,7 +13,7 @@ use strict;
 use Video::Info::Magic;
 use IO::File;
 
-our $VERSION = '0.99';
+our $VERSION = '0.991';
 
 use Class::MakeMethods::Emulator::MethodMaker
   get_set => [ qw(
@@ -55,8 +55,20 @@ use Class::MakeMethods::Emulator::MethodMaker
 
 			  _handle          #filehandle to bitstream
 			 ) ],
-  new_with_init => 'new',
+#  new_with_init => 'new',
 ;
+
+sub new {
+  my $proto = shift;
+  my $class = ref($proto) || $proto;
+  my $self = bless { @_ }, $class;
+
+  $self = $self->init(@_);
+  return $self;
+
+#  return $self->init(@_) if ref($self) eq __PACKAGE__;
+#  return $self;
+}
 
 sub init {
   my $proto = shift;
@@ -66,13 +78,15 @@ sub init {
 
   my %raw_param = @_;
   my %param;
-  foreach(keys %raw_param){/^-(.+)/;$param{$1} = $raw_param{$_}};
+  foreach(keys %raw_param){/^-?(.+)/;$param{$1} = $raw_param{$_}};
 
   if($param{file}){
-
 	my($filetype,$handler) = @{ divine($param{file}) };
+
 	if($handler){
 	  my $class = __PACKAGE__ . '::' . $handler;
+             $class = 'MP3::Info' if $handler eq 'MP3';
+
 	  my $has_class = eval "require $class";
 	  $param{subtype} = $filetype;
 
@@ -80,9 +94,7 @@ sub init {
 		if($handler eq 'MP3'){
 		  $self = $class->new( $param{file} );
 		} else {
-
 		  $self = $class->new(%param);
-
 		  $self->probe( $param{file}, [ $filetype, $handler ] );
 		}
 	  } else {
@@ -105,7 +117,10 @@ sub init_attributes {
   my $self = shift;
   my %raw_param = @_;
   my %param;
-  foreach(keys %raw_param){/^-(.+)/;$param{$1} = $raw_param{$_}};
+
+  #this cleans out optional -'s from the front of args.
+  #i plan to deprecate -'ed args somewhere near v2.0
+  foreach(keys %raw_param){ /^-?(.+)/; $param{$1} = $raw_param{$_}; };
 
   foreach my $attr (qw(
 					   astreams arate achans vstreams vrate vframes fps
