@@ -13,6 +13,7 @@ use strict;
 use Symbol;
 
 our %FIELDS = ( 
+			   filename    => '', #path to file
 			   type        => '', #ASF,MPEG,RIFF,etc
 			   title       => '', #ASF media title
 			   author      => '', #ASF author
@@ -67,7 +68,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 for my $datum ( keys %FIELDS ) {
     no strict "refs"; ## to register new methods in package
@@ -93,6 +94,13 @@ for my $datum ( keys %FIELDS ) {
 ## Extra methods
 ##
 ##------------------------------------------------------------------------
+sub filesize {
+  my $self = shift;
+  return $self->{filesize} if defined $self->{filesize};
+  $self->{filesize} = -s $self->filename;
+  return $self->{filesize};
+}
+
 sub minutes {
   my $self = shift;
   my $seconds = int($self->duration) % 60;
@@ -156,6 +164,7 @@ sub new {
 		foreach(keys %param){/^-(.+)/;$nodash_param{$1} = $param{$_}};
 		$self->{$_} = $param{$_} foreach(keys %nodash_param);
 	  }
+
 	  return $self;				
 	} else {
 	  my %nodash_param = ();
@@ -180,9 +189,11 @@ sub new {
 ##------------------------------------------------------------------------
 sub handle {
     my($self,$file) = @_;
-    
+
     return $self->_handle unless defined $file;
-    
+
+    $self->filename($file);
+
     open(F,$file) or die "couldn't open $file: $!";
     return $self->_handle( \*F );
 }
@@ -353,6 +364,14 @@ video frame height, in pixels.
 =head2 Other Methods
 
 =over 4
+
+=item filename()
+
+path to the file used to create the video object
+
+=item filesize()
+
+size in bytes of filename()
 
 =item type()
 

@@ -1,5 +1,8 @@
 Revision history for Perl extension Video::Info.
 
+0.10  Added filename() and filesize() methods for returning the path to
+      the file used to create the object, as well as its size (in bytes).
+
 0.09  Added afrequency() method for retrieving audio channel sampling
       frequency (Corren Vorwerk)
       No longer using warnings.pm because of problems with ActiveState Perl
